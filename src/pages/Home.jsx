@@ -1,4 +1,4 @@
-import { Box, Grid, Heading, Text, VStack, useColorModeValue, HStack, Image } from '@chakra-ui/react'
+import { Box, Grid, Heading, Text, VStack, useColorModeValue, HStack, Image, Spinner, Center } from '@chakra-ui/react'
 import { FiTrendingUp, FiSettings, FiShield, FiLink, FiShoppingCart } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
@@ -48,9 +48,11 @@ const FeatureCard = ({ icon, title, description, isLocked = false, to }) => {
 }
 
 const Home = () => {
-  const { currentUser, companies, selectedCompanyId } = useAuth();
-  const { admin } = useAdmin(currentUser?.uid);
+  const { currentUser, companies, selectedCompanyId, loading: authLoading } = useAuth();
+  const { admin, loading: adminLoading } = useAdmin(currentUser?.uid);
   const selectedCompany = companies?.find(company => company.id === selectedCompanyId);
+
+  const isLoading = authLoading || adminLoading || !currentUser || !admin || !selectedCompany;
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -59,6 +61,20 @@ const Home = () => {
     if (hour < 22) return 'Good evening';
     return 'Good night';
   };
+
+  if (isLoading) {
+    return (
+      <Center h="100%">
+        <Spinner
+          thickness="4px"
+          speed="0.65s"
+          emptyColor="gray.200"
+          color="brand.500"
+          size="xl"
+        />
+      </Center>
+    );
+  }
 
   return (
     <Box>
@@ -92,7 +108,7 @@ const Home = () => {
             </Box>
             <VStack align="start" spacing={0}>
               <Heading size="2xl" mb={2}>
-                {getTimeBasedGreeting()}, {admin?.name || currentUser?.email?.split('@')[0] || 'there'}!
+                {getTimeBasedGreeting()}, {admin?.name}!
               </Heading>
               <Text fontSize="xl" color={useColorModeValue('gray.600', 'gray.400')}>
                 Welcome to {selectedCompany?.name || 'Octavian'}

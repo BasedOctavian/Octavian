@@ -1,17 +1,18 @@
 import { db } from './config';
-import { collection, doc, setDoc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 // Add a new social media account to a company
-export const addSocialMediaAccount = async (companyId, platform, handle, token) => {
+export const addSocialMediaAccount = async (companyId, platform, handle) => {
   try {
     const companyRef = doc(db, 'companies', companyId);
     const socialMediaRef = collection(companyRef, 'SocialMedia');
     
     await setDoc(doc(socialMediaRef, platform), {
       handle,
-      token,
-      lastUpdated: new Date().toISOString(),
-      status: 'connected'
+      lastUpdated: serverTimestamp(),
+      status: 'connected',
+      password: '',
+      passwordExpiry: null
     });
     
     return true;
@@ -48,7 +49,7 @@ export const updateSocialMediaAccount = async (companyId, platform, updates) => 
     
     await updateDoc(socialMediaRef, {
       ...updates,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: serverTimestamp()
     });
     
     return true;
@@ -71,4 +72,39 @@ export const removeSocialMediaAccount = async (companyId, platform) => {
     console.error('Error removing social media account:', error);
     return false;
   }
+};
+
+// Generate and update password for a social media account
+export const updateSocialMediaPassword = async (companyId, platform) => {
+  try {
+    const companyRef = doc(db, 'companies', companyId);
+    const socialMediaRef = doc(collection(companyRef, 'SocialMedia'), platform);
+    
+    const newPassword = generateSecurePassword();
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30); // 30 days from now
+    
+    await updateDoc(socialMediaRef, {
+      password: newPassword,
+      passwordExpiry: expiryDate.toISOString(),
+      lastUpdated: serverTimestamp()
+    });
+    
+    return newPassword;
+  } catch (error) {
+    console.error('Error updating password:', error);
+    return null;
+  }
+};
+
+// Helper function to generate secure password
+const generateSecurePassword = () => {
+  const length = 16;
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    password += charset[randomIndex];
+  }
+  return password;
 }; 

@@ -6,7 +6,7 @@ import { addSocialMediaAccount, getSocialMediaAccounts, updateSocialMediaAccount
 import { useAuth } from '../context/AuthContext'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import SocialMediaConnectModal from '../components/SocialMediaConnectModal'
+import SocialMedia from '../components/SocialMedia'
 
 const FeatureCard = ({ icon, title, description, actionText, onAction, modalContent }) => {
   const bgColor = useColorModeValue('white', 'brand.800')
@@ -655,7 +655,14 @@ The Juicy Burger Team`
 
           <GiftCardLoyaltyCard />
 
-          <SocialMediaCard />
+          <FeatureCard
+            icon={<FiShare2 size={24} />}
+            title="Social Media Management"
+            description="Manage your social media presence with content calendar, performance tracking, and account management"
+            actionText="Open Social Hub"
+            onAction={() => {}}
+            modalContent={<SocialMedia />}
+          />
         </Grid>
       </VStack>
     </Box>

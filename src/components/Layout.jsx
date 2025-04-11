@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, Text, VStack, HStack, useColorModeValue, Avatar, Button, Menu, MenuButton, MenuList, MenuItem, IconButton, useColorMode, Image, MenuDivider } from '@chakra-ui/react'
+import { Box, Flex, Text, VStack, HStack, useColorModeValue, Avatar, Button, Menu, MenuButton, MenuList, MenuItem, IconButton, useColorMode, Image, MenuDivider, Spinner, Center } from '@chakra-ui/react'
 import { FiHome, FiSettings, FiLock, FiTrendingUp, FiShield, FiLink, FiShoppingCart, FiLogOut, FiUser, FiBriefcase, FiChevronDown, FiSun, FiMoon, FiShare2 } from 'react-icons/fi'
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -42,13 +42,31 @@ const NavItem = ({ icon, children, to, isLocked = false }) => {
 }
 
 const Layout = ({ children }) => {
-  const { currentUser, companies, selectedCompanyId, switchCompany } = useAuth()
-  const { admin } = useAdmin(currentUser?.uid)
+  const { currentUser, companies, selectedCompanyId, switchCompany, loading: authLoading } = useAuth()
+  const { admin, loading: adminLoading } = useAdmin(currentUser?.uid)
   const navigate = useNavigate()
   const { colorMode, toggleColorMode } = useColorMode()
   const sidebarBg = useColorModeValue('white', 'brand.900')
   const borderColor = useColorModeValue('gray.200', 'brand.700')
   const mainBg = useColorModeValue('gray.50', 'brand.1000')
+
+  const isLoading = authLoading || adminLoading || !currentUser || !admin;
+
+  if (isLoading) {
+    return (
+      <Flex h="100vh" w="100vw" justify="center" align="center">
+        <Center>
+          <Spinner
+            thickness="4px"
+            speed="0.65s"
+            emptyColor="gray.200"
+            color="brand.500"
+            size="xl"
+          />
+        </Center>
+      </Flex>
+    );
+  }
 
   const handleSignOut = async () => {
     try {
