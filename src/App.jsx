@@ -22,20 +22,20 @@ const theme = extendTheme({
   },
   colors: {
     brand: {
-      1000: '#0a0a0a',
-      900: '#121212',
-      800: '#1a1a1a',
-      700: '#2a2a2a',
-      600: '#3a3a3a',
-      500: '#4a4a4a',
-      400: '#5a5a5a',
-      300: '#6a6a6a',
-      200: '#7a7a7a',
-      100: '#8a8a8a',
+      1000: '#091721',
+      900: '#0d1f2e',
+      800: '#12273b',
+      700: '#162f48',
+      600: '#1b3755',
+      500: '#1f3f62',
+      400: '#24476f',
+      300: '#284f7c',
+      200: '#2d5789',
+      100: '#315f96',
     },
     accent: {
-      500: '#3182ce',
-      600: '#2b6cb0',
+      500: '#EBBF5D',
+      600: '#d9b155',
     }
   },
   styles: {
@@ -50,10 +50,20 @@ const theme = extendTheme({
     Button: {
       variants: {
         solid: (props) => ({
-          bg: 'accent.500',
+          bg: props.colorMode === 'dark' ? 'brand.700' : 'brand.600',
           color: 'white',
           _hover: {
-            bg: 'accent.600',
+            bg: props.colorMode === 'dark' ? 'brand.600' : 'brand.500',
+            borderColor: 'accent.500',
+            borderWidth: '1px',
+          },
+        }),
+        outline: (props) => ({
+          borderColor: 'accent.500',
+          color: 'accent.500',
+          _hover: {
+            bg: 'accent.500',
+            color: 'brand.1000',
           },
         }),
       },
@@ -64,6 +74,9 @@ const theme = extendTheme({
           bg: props.colorMode === 'dark' ? 'brand.800' : 'white',
           color: props.colorMode === 'dark' ? 'white' : 'gray.800',
           borderColor: props.colorMode === 'dark' ? 'brand.700' : 'gray.200',
+          _hover: {
+            borderColor: 'accent.500',
+          },
         },
       }),
     },
@@ -77,6 +90,7 @@ const theme = extendTheme({
           color: props.colorMode === 'dark' ? 'white' : 'gray.800',
           _hover: {
             bg: props.colorMode === 'dark' ? 'brand.700' : 'gray.100',
+            color: 'accent.500',
           },
         },
       }),
@@ -87,6 +101,7 @@ const theme = extendTheme({
         color: props.colorMode === 'dark' ? 'white' : 'gray.800',
         _hover: {
           bg: props.colorMode === 'dark' ? 'brand.700' : 'gray.100',
+          color: 'accent.500',
         },
       }),
     },

@@ -1,4 +1,4 @@
-import { Box, Grid, Heading, Text, VStack, useColorModeValue } from '@chakra-ui/react'
+import { Box, Grid, Heading, Text, VStack, useColorModeValue, HStack } from '@chakra-ui/react'
 import { FiTrendingUp, FiSettings, FiShield, FiLink, FiShoppingCart } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
@@ -8,6 +8,7 @@ const FeatureCard = ({ icon, title, description, isLocked = false, to }) => {
   const borderColor = useColorModeValue('gray.200', 'brand.700')
   const textColor = useColorModeValue('gray.800', 'white')
   const descriptionColor = useColorModeValue('gray.600', 'gray.400')
+  const iconColor = useColorModeValue('brand.600', 'brand.400')
   const navigate = useNavigate()
 
   return (
@@ -22,16 +23,20 @@ const FeatureCard = ({ icon, title, description, isLocked = false, to }) => {
         transform: 'translateY(-2px)',
         boxShadow: 'lg',
         cursor: 'pointer',
+        borderColor: 'accent.500',
+        color: 'accent.500',
       }}
       transition="all 0.2s"
       onClick={() => !isLocked && navigate(to)}
     >
       <VStack align="start" spacing={4}>
-        {icon}
+        <Box color={iconColor} _hover={{ color: 'accent.500' }}>
+          {icon}
+        </Box>
         <Heading size="md">{title}</Heading>
         <Text color={descriptionColor}>{description}</Text>
         {isLocked && (
-          <Text fontSize="sm" color="yellow.400">
+          <Text fontSize="sm" color="accent.500">
             Coming Soon
           </Text>
         )}
@@ -45,12 +50,17 @@ const Home = () => {
     <Box>
       <VStack spacing={8} align="stretch">
         <Box>
-          <Heading size="2xl" mb={2}>
-            Welcome to Octavian
-          </Heading>
-          <Text fontSize="xl" color="gray.400">
-            Your all-in-one business management platform
-          </Text>
+          <HStack spacing={4} align="center">
+            <Box as="img" src="/src/assets/logo.png" alt="Octavian Logo" h="48px" />
+            <VStack align="start" spacing={0}>
+              <Heading size="2xl" mb={2}>
+                Welcome to Octavian
+              </Heading>
+              <Text fontSize="xl" color={useColorModeValue('gray.600', 'gray.400')}>
+                Your all-in-one business management platform
+              </Text>
+            </VStack>
+          </HStack>
         </Box>
 
         <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={6}>

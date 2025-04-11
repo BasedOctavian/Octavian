@@ -71,9 +71,7 @@ const Layout = ({ children }) => {
       >
         <VStack spacing={4} align="stretch" h="100%">
           <HStack justify="space-between" align="center">
-            <Text fontSize="2xl" fontWeight="bold" color={useColorModeValue('gray.800', 'white')}>
-              Octavian
-            </Text>
+            <Box as="img" src="/src/assets/logo.png" alt="Octavian Logo" h="32px" />
             <IconButton
               icon={colorMode === 'dark' ? <FiSun /> : <FiMoon />}
               onClick={toggleColorMode}

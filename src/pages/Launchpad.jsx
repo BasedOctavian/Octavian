@@ -4,8 +4,11 @@ import { useState } from 'react'
 import React from 'react'
 
 const FeatureCard = ({ icon, title, description, actionText, onAction, modalContent }) => {
-  const bgColor = useColorModeValue('brand.800', 'brand.700')
-  const borderColor = useColorModeValue('brand.700', 'brand.600')
+  const bgColor = useColorModeValue('white', 'brand.800')
+  const borderColor = useColorModeValue('gray.200', 'brand.700')
+  const textColor = useColorModeValue('gray.800', 'white')
+  const descriptionColor = useColorModeValue('gray.600', 'gray.400')
+  const iconColor = useColorModeValue('brand.600', 'brand.400')
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   return (
@@ -16,15 +19,30 @@ const FeatureCard = ({ icon, title, description, actionText, onAction, modalCont
         border="1px"
         borderColor={borderColor}
         bg={bgColor}
+        color={textColor}
+        _hover={{
+          transform: 'translateY(-2px)',
+          boxShadow: 'lg',
+          cursor: 'pointer',
+          borderColor: 'accent.500',
+          color: 'accent.500',
+        }}
+        transition="all 0.2s"
+        onClick={onOpen}
       >
         <VStack align="start" spacing={4}>
-          {icon}
+          <Box color={iconColor} _hover={{ color: 'accent.500' }}>
+            {icon}
+          </Box>
           <Heading size="md">{title}</Heading>
-          <Text color="gray.400">{description}</Text>
+          <Text color={descriptionColor}>{description}</Text>
           <Button
-            colorScheme="blue"
+            variant="outline"
             size="sm"
-            onClick={onOpen}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
           >
             {actionText}
           </Button>
@@ -33,7 +51,7 @@ const FeatureCard = ({ icon, title, description, actionText, onAction, modalCont
 
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
-        <ModalContent bg={bgColor}>
+        <ModalContent bg={bgColor} color={textColor}>
           <ModalHeader>{title}</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
