@@ -1,7 +1,9 @@
-import { Box, Grid, Heading, Text, VStack, useColorModeValue, HStack } from '@chakra-ui/react'
+import { Box, Grid, Heading, Text, VStack, useColorModeValue, HStack, Image } from '@chakra-ui/react'
 import { FiTrendingUp, FiSettings, FiShield, FiLink, FiShoppingCart } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
+import { useAuth } from '../context/AuthContext'
+import { useAdmin } from '../hooks/useData'
 
 const FeatureCard = ({ icon, title, description, isLocked = false, to }) => {
   const bgColor = useColorModeValue('white', 'brand.800')
@@ -46,18 +48,54 @@ const FeatureCard = ({ icon, title, description, isLocked = false, to }) => {
 }
 
 const Home = () => {
+  const { currentUser, companies, selectedCompanyId } = useAuth();
+  const { admin } = useAdmin(currentUser?.uid);
+  const selectedCompany = companies?.find(company => company.id === selectedCompanyId);
+
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    if (hour < 22) return 'Good evening';
+    return 'Good night';
+  };
+
   return (
     <Box>
       <VStack spacing={8} align="stretch">
         <Box>
           <HStack spacing={4} align="center">
-            <Box as="img" src="/src/assets/logo.png" alt="Octavian Logo" h="48px" />
+            <Box
+              w="48px"
+              h="48px"
+              borderRadius="lg"
+              overflow="hidden"
+              bg={useColorModeValue('gray.100', 'brand.700')}
+            >
+              {selectedCompany?.picture ? (
+                <Image
+                  src={selectedCompany.picture}
+                  alt={selectedCompany.name}
+                  w="100%"
+                  h="100%"
+                  objectFit="cover"
+                />
+              ) : (
+                <Image
+                  src="/src/assets/logo.png"
+                  alt="Octavian Logo"
+                  w="100%"
+                  h="100%"
+                  objectFit="cover"
+                />
+              )}
+            </Box>
             <VStack align="start" spacing={0}>
               <Heading size="2xl" mb={2}>
-                Welcome to Octavian
+                {getTimeBasedGreeting()}, {admin?.name || currentUser?.email?.split('@')[0] || 'there'}!
               </Heading>
               <Text fontSize="xl" color={useColorModeValue('gray.600', 'gray.400')}>
-                Your all-in-one business management platform
+                Welcome to {selectedCompany?.name || 'Octavian'}
               </Text>
             </VStack>
           </HStack>

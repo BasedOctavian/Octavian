@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import CompanySwitcher from './CompanySwitcher'
+import { useAdmin } from '../hooks/useData'
 
 const NavItem = ({ icon, children, to, isLocked = false }) => {
   const location = useLocation()
@@ -41,7 +42,8 @@ const NavItem = ({ icon, children, to, isLocked = false }) => {
 }
 
 const Layout = ({ children }) => {
-  const { currentUser, userData, companies, selectedCompanyId, switchCompany } = useAuth()
+  const { currentUser, companies, selectedCompanyId, switchCompany } = useAuth()
+  const { admin } = useAdmin(currentUser?.uid)
   const navigate = useNavigate()
   const { colorMode, toggleColorMode } = useColorMode()
   const sidebarBg = useColorModeValue('white', 'brand.900')
@@ -91,8 +93,8 @@ const Layout = ({ children }) => {
                 leftIcon={
                   <Avatar
                     size="sm"
-                    src={userData?.profilePicture}
-                    name={userData?.name || currentUser.email}
+                    src={admin?.profilePicture}
+                    name={admin?.name || currentUser.email}
                     bg={useColorModeValue('brand.500', 'brand.300')}
                     color="white"
                   />
@@ -108,7 +110,7 @@ const Layout = ({ children }) => {
               >
                 <Box textAlign="left" overflow="hidden">
                   <Text fontSize="sm" fontWeight="bold" isTruncated>
-                    {userData?.name || currentUser.email}
+                    {admin?.name || currentUser.email}
                   </Text>
                   <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} isTruncated>
                     {companies?.find(company => company.id === selectedCompanyId)?.name || 'Select Company'}
