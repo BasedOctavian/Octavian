@@ -1,7 +1,12 @@
-import { Box, Grid, Heading, Text, VStack, Button, useColorModeValue, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, useDisclosure, Input, Textarea, HStack, Image, Link, Badge, SimpleGrid } from '@chakra-ui/react'
+import { Box, Grid, Heading, Text, VStack, Button, useColorModeValue, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, useDisclosure, Input, Textarea, HStack, Image, Link, Badge, SimpleGrid, useToast } from '@chakra-ui/react'
 import { FiStar, FiCreditCard, FiMenu, FiGift, FiShare2, FiExternalLink } from 'react-icons/fi'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
+import { addSocialMediaAccount, getSocialMediaAccounts, updateSocialMediaAccount, removeSocialMediaAccount } from '../firebase/socialMedia'
+import { useAuth } from '../context/AuthContext'
+import { getDoc, doc } from 'firebase/firestore'
+import { db } from '../firebase/config'
+import SocialMediaConnectModal from '../components/SocialMediaConnectModal'
 
 const FeatureCard = ({ icon, title, description, actionText, onAction, modalContent }) => {
   const bgColor = useColorModeValue('white', 'brand.800')
@@ -65,21 +70,99 @@ const FeatureCard = ({ icon, title, description, actionText, onAction, modalCont
 
 const SocialMediaCard = () => {
   const [socialPost, setSocialPost] = useState('')
-  const [connectedAccounts, setConnectedAccounts] = useState([
-    { platform: 'Instagram', handle: '@juicyburger', lastPost: '2024-03-15', status: 'connected' },
-    { platform: 'Facebook', handle: '@juicyburger', lastPost: '2024-03-10', status: 'connected' },
-    { platform: 'TikTok', handle: '@juicyburger', lastPost: '2024-02-28', status: 'needs_update' }
-  ])
-  const [contentCalendar, setContentCalendar] = useState([
-    { date: '2024-03-20', platform: 'Instagram', type: 'post', content: 'New burger special' },
-    { date: '2024-03-22', platform: 'Facebook', type: 'event', content: 'Live music night' },
-    { date: '2024-03-25', platform: 'TikTok', type: 'video', content: 'Behind the scenes' }
-  ])
-  const [postMetrics, setPostMetrics] = useState({
-    instagram: { posts: 5, avgLikes: 143, comments: 21, engagement: '4.2%' },
-    facebook: { posts: 3, avgLikes: 89, comments: 15, engagement: '3.8%' },
-    tiktok: { posts: 2, avgLikes: 256, comments: 45, engagement: '6.1%' }
-  })
+  const [connectedAccounts, setConnectedAccounts] = useState([])
+  const [contentCalendar, setContentCalendar] = useState([])
+  const [postMetrics, setPostMetrics] = useState({})
+  const { currentUser } = useAuth()
+  const [companyId, setCompanyId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const toast = useToast()
+
+  useEffect(() => {
+    const fetchSocialMediaData = async () => {
+      if (currentUser) {
+        try {
+          // Get the company ID from the user's profile
+          const userDoc = await getDoc(doc(db, 'admins', currentUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.companyIDs && userData.companyIDs.length > 0) {
+              setCompanyId(userData.companyIDs[0]); // Using first company for now
+              
+              // Fetch social media accounts
+              const accounts = await getSocialMediaAccounts(userData.companyIDs[0]);
+              setConnectedAccounts(Object.entries(accounts).map(([platform, data]) => ({
+                platform,
+                handle: data.handle,
+                lastPost: data.lastUpdated,
+                status: data.status
+              })));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching social media data:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchSocialMediaData();
+  }, [currentUser]);
+
+  const handleConnectAccount = async (platform, handle, token) => {
+    if (!companyId) return;
+    
+    const success = await addSocialMediaAccount(companyId, platform, handle, token);
+    if (success) {
+      setConnectedAccounts(prev => [...prev, {
+        platform,
+        handle,
+        lastPost: new Date().toISOString(),
+        status: 'connected'
+      }]);
+      toast({
+        title: "Account Connected",
+        description: `${platform} account connected successfully`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to connect account",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDisconnectAccount = async (platform) => {
+    if (!companyId) return;
+    
+    const success = await removeSocialMediaAccount(companyId, platform);
+    if (success) {
+      setConnectedAccounts(prev => prev.filter(account => account.platform !== platform));
+      toast({
+        title: "Account Disconnected",
+        description: `${platform} account disconnected successfully`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to disconnect account",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   const generatePassword = () => {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
@@ -97,145 +180,170 @@ const SocialMediaCard = () => {
   }
 
   return (
-    <FeatureCard
-      icon={<FiShare2 size={24} />}
-      title="Social Media Management"
-      description="Manage your social media presence with content calendar, performance tracking, and account management"
-      actionText="Open Social Hub"
-      onAction={handleSocialMedia}
-      modalContent={
-        <VStack spacing={6} align="stretch">
-          {/* Connected Accounts Section */}
-          <Box>
-            <Heading size="md" mb={4}>Connected Accounts</Heading>
-            <VStack spacing={3} align="stretch">
-              {connectedAccounts.map((account, index) => (
-                <Box
-                  key={index}
-                  p={3}
-                  border="1px"
-                  borderColor="gray.600"
-                  borderRadius="md"
-                >
-                  <HStack justify="space-between">
-                    <Text fontWeight="bold">{account.platform}</Text>
-                    <Text color="gray.400">{account.handle}</Text>
-                    <Badge colorScheme={account.status === 'connected' ? 'green' : 'red'}>
-                      {account.status === 'connected' ? 'Connected' : 'Needs Update'}
-                    </Badge>
-                  </HStack>
-                  <Text fontSize="sm" color="gray.400">
-                    Last Post: {new Date(account.lastPost).toLocaleDateString()}
-                  </Text>
-                </Box>
-              ))}
-            </VStack>
-          </Box>
+    <>
+      <FeatureCard
+        icon={<FiShare2 size={24} />}
+        title="Social Media Management"
+        description="Manage your social media presence with content calendar, performance tracking, and account management"
+        actionText="Open Social Hub"
+        onAction={handleSocialMedia}
+        modalContent={
+          <VStack spacing={6} align="stretch">
+            {/* Connected Accounts Section */}
+            <Box>
+              <Heading size="md" mb={4}>Connected Accounts</Heading>
+              {loading ? (
+                <Text>Loading accounts...</Text>
+              ) : (
+                <VStack spacing={3} align="stretch">
+                  {connectedAccounts.map((account, index) => (
+                    <Box
+                      key={index}
+                      p={3}
+                      border="1px"
+                      borderColor="gray.600"
+                      borderRadius="md"
+                    >
+                      <HStack justify="space-between">
+                        <Text fontWeight="bold">{account.platform}</Text>
+                        <Text color="gray.400">{account.handle}</Text>
+                        <Badge colorScheme={account.status === 'connected' ? 'green' : 'red'}>
+                          {account.status === 'connected' ? 'Connected' : 'Needs Update'}
+                        </Badge>
+                      </HStack>
+                      <Text fontSize="sm" color="gray.400">
+                        Last Post: {new Date(account.lastPost).toLocaleDateString()}
+                      </Text>
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        onClick={() => handleDisconnectAccount(account.platform)}
+                      >
+                        Disconnect
+                      </Button>
+                    </Box>
+                  ))}
+                  <Button
+                    colorScheme="blue"
+                    onClick={onOpen}
+                  >
+                    Connect New Account
+                  </Button>
+                </VStack>
+              )}
+            </Box>
 
-          {/* Content Calendar Section */}
-          <Box>
-            <Heading size="md" mb={4}>Content Calendar</Heading>
-            <SimpleGrid columns={7} spacing={2}>
-              {Array.from({ length: 7 }, (_, i) => {
-                const date = new Date()
-                date.setDate(date.getDate() + i)
-                const dayEvents = contentCalendar.filter(
-                  event => new Date(event.date).toDateString() === date.toDateString()
-                )
-                return (
+            {/* Content Calendar Section */}
+            <Box>
+              <Heading size="md" mb={4}>Content Calendar</Heading>
+              <SimpleGrid columns={7} spacing={2}>
+                {Array.from({ length: 7 }, (_, i) => {
+                  const date = new Date()
+                  date.setDate(date.getDate() + i)
+                  const dayEvents = contentCalendar.filter(
+                    event => new Date(event.date).toDateString() === date.toDateString()
+                  )
+                  return (
+                    <Box
+                      key={i}
+                      p={2}
+                      border="1px"
+                      borderColor="gray.600"
+                      borderRadius="md"
+                      minH="100px"
+                    >
+                      <Text fontSize="sm" fontWeight="bold">
+                        {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </Text>
+                      {dayEvents.map((event, idx) => (
+                        <Text key={idx} fontSize="xs" color="blue.400">
+                          {event.platform}: {event.content}
+                        </Text>
+                      ))}
+                    </Box>
+                  )
+                })}
+              </SimpleGrid>
+            </Box>
+
+            {/* Performance Metrics Section */}
+            <Box>
+              <Heading size="md" mb={4}>Performance Snapshot</Heading>
+              <SimpleGrid columns={3} spacing={4}>
+                {Object.entries(postMetrics).map(([platform, metrics]) => (
                   <Box
-                    key={i}
-                    p={2}
+                    key={platform}
+                    p={3}
                     border="1px"
                     borderColor="gray.600"
                     borderRadius="md"
-                    minH="100px"
                   >
-                    <Text fontSize="sm" fontWeight="bold">
-                      {date.toLocaleDateString('en-US', { weekday: 'short' })}
-                    </Text>
-                    {dayEvents.map((event, idx) => (
-                      <Text key={idx} fontSize="xs" color="blue.400">
-                        {event.platform}: {event.content}
-                      </Text>
-                    ))}
+                    <Text fontWeight="bold" textTransform="capitalize">{platform}</Text>
+                    <Text fontSize="sm">Posts: {metrics.posts}</Text>
+                    <Text fontSize="sm">Avg Likes: {metrics.avgLikes}</Text>
+                    <Text fontSize="sm">Comments: {metrics.comments}</Text>
+                    <Text fontSize="sm">Engagement: {metrics.engagement}</Text>
                   </Box>
-                )
-              })}
-            </SimpleGrid>
-          </Box>
+                ))}
+              </SimpleGrid>
+            </Box>
 
-          {/* Performance Metrics Section */}
-          <Box>
-            <Heading size="md" mb={4}>Performance Snapshot</Heading>
-            <SimpleGrid columns={3} spacing={4}>
-              {Object.entries(postMetrics).map(([platform, metrics]) => (
-                <Box
-                  key={platform}
-                  p={3}
-                  border="1px"
-                  borderColor="gray.600"
-                  borderRadius="md"
+            {/* Password Management Section */}
+            <Box>
+              <Heading size="md" mb={4}>Password Management</Heading>
+              <VStack spacing={3} align="stretch">
+                <Button
+                  colorScheme="blue"
+                  onClick={() => {
+                    const newPassword = generatePassword()
+                    navigator.clipboard.writeText(newPassword)
+                    toast({
+                      title: "Password Generated",
+                      description: "New password copied to clipboard",
+                      status: "success",
+                      duration: 3000,
+                      isClosable: true,
+                    })
+                  }}
                 >
-                  <Text fontWeight="bold" textTransform="capitalize">{platform}</Text>
-                  <Text fontSize="sm">Posts: {metrics.posts}</Text>
-                  <Text fontSize="sm">Avg Likes: {metrics.avgLikes}</Text>
-                  <Text fontSize="sm">Comments: {metrics.comments}</Text>
-                  <Text fontSize="sm">Engagement: {metrics.engagement}</Text>
-                </Box>
-              ))}
-            </SimpleGrid>
-          </Box>
-
-          {/* Password Management Section */}
-          <Box>
-            <Heading size="md" mb={4}>Password Management</Heading>
-            <VStack spacing={3} align="stretch">
-              <Button
-                colorScheme="blue"
-                onClick={() => {
-                  const newPassword = generatePassword()
-                  navigator.clipboard.writeText(newPassword)
-                  toast({
-                    title: "Password Generated",
-                    description: "New password copied to clipboard",
-                    status: "success",
-                    duration: 3000,
-                    isClosable: true,
-                  })
-                }}
-              >
-                Generate Secure Password
-              </Button>
-              <Text fontSize="sm" color="gray.400">
-                Last password refresh: {new Date().toLocaleDateString()}
-              </Text>
-            </VStack>
-          </Box>
-
-          {/* Social Post Generator */}
-          <Box>
-            <Heading size="md" mb={4}>Post Generator</Heading>
-            <Textarea
-              value={socialPost}
-              readOnly
-              rows={4}
-              fontFamily="monospace"
-            />
-            <HStack mt={2}>
-              <Button colorScheme="blue" onClick={() => navigator.clipboard.writeText(socialPost)}>
-                Copy Post
-              </Button>
-              <Link href="https://later.com" isExternal>
-                <Button rightIcon={<FiExternalLink />}>
-                  Schedule on Later
+                  Generate Secure Password
                 </Button>
-              </Link>
-            </HStack>
-          </Box>
-        </VStack>
-      }
-    />
+                <Text fontSize="sm" color="gray.400">
+                  Last password refresh: {new Date().toLocaleDateString()}
+                </Text>
+              </VStack>
+            </Box>
+
+            {/* Social Post Generator */}
+            <Box>
+              <Heading size="md" mb={4}>Post Generator</Heading>
+              <Textarea
+                value={socialPost}
+                readOnly
+                rows={4}
+                fontFamily="monospace"
+              />
+              <HStack mt={2}>
+                <Button colorScheme="blue" onClick={() => navigator.clipboard.writeText(socialPost)}>
+                  Copy Post
+                </Button>
+                <Link href="https://later.com" isExternal>
+                  <Button rightIcon={<FiExternalLink />}>
+                    Schedule on Later
+                  </Button>
+                </Link>
+              </HStack>
+            </Box>
+          </VStack>
+        }
+      />
+
+      <SocialMediaConnectModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onConnect={handleConnectAccount}
+      />
+    </>
   )
 }
 

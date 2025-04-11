@@ -1,10 +1,11 @@
 import React from 'react';
-import { Box, Flex, Text, VStack, HStack, useColorModeValue, Avatar, Button, Menu, MenuButton, MenuList, MenuItem, IconButton, useColorMode } from '@chakra-ui/react'
-import { FiHome, FiSettings, FiLock, FiTrendingUp, FiShield, FiLink, FiShoppingCart, FiLogOut, FiUser, FiBriefcase, FiChevronDown, FiSun, FiMoon } from 'react-icons/fi'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Box, Flex, Text, VStack, HStack, useColorModeValue, Avatar, Button, Menu, MenuButton, MenuList, MenuItem, IconButton, useColorMode, Image, MenuDivider } from '@chakra-ui/react'
+import { FiHome, FiSettings, FiLock, FiTrendingUp, FiShield, FiLink, FiShoppingCart, FiLogOut, FiUser, FiBriefcase, FiChevronDown, FiSun, FiMoon, FiShare2 } from 'react-icons/fi'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
+import CompanySwitcher from './CompanySwitcher'
 
 const NavItem = ({ icon, children, to, isLocked = false }) => {
   const location = useLocation()
@@ -40,7 +41,7 @@ const NavItem = ({ icon, children, to, isLocked = false }) => {
 }
 
 const Layout = ({ children }) => {
-  const { currentUser, userData } = useAuth()
+  const { currentUser, userData, companies, selectedCompanyId, switchCompany } = useAuth()
   const navigate = useNavigate()
   const { colorMode, toggleColorMode } = useColorMode()
   const sidebarBg = useColorModeValue('white', 'brand.900')
@@ -92,6 +93,8 @@ const Layout = ({ children }) => {
                     size="sm"
                     src={userData?.profilePicture}
                     name={userData?.name || currentUser.email}
+                    bg={useColorModeValue('brand.500', 'brand.300')}
+                    color="white"
                   />
                 }
                 rightIcon={<FiChevronDown />}
@@ -99,8 +102,8 @@ const Layout = ({ children }) => {
                 justifyContent="flex-start"
                 p={3}
                 borderRadius="lg"
-                bg={useColorModeValue('gray.100', 'brand.800')}
-                _hover={{ bg: useColorModeValue('gray.200', 'brand.700') }}
+                bg={useColorModeValue('gray.50', 'brand.800')}
+                _hover={{ bg: useColorModeValue('gray.100', 'brand.700') }}
                 color={useColorModeValue('gray.800', 'white')}
               >
                 <Box textAlign="left" overflow="hidden">
@@ -108,28 +111,97 @@ const Layout = ({ children }) => {
                     {userData?.name || currentUser.email}
                   </Text>
                   <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} isTruncated>
-                    {userData?.jobTitle || 'User'}
+                    {companies?.find(company => company.id === selectedCompanyId)?.name || 'Select Company'}
                   </Text>
                 </Box>
               </MenuButton>
-              <MenuList>
+              <MenuList
+                minW="240px"
+                py={2}
+                bg={useColorModeValue('white', 'brand.800')}
+                borderColor={useColorModeValue('gray.200', 'brand.700')}
+                boxShadow="lg"
+              >
                 <MenuItem
-                  icon={<FiUser />}
+                  icon={<FiUser size={16} />}
                   onClick={() => navigate('/profile')}
+                  py={2}
+                  px={4}
+                  _hover={{ bg: useColorModeValue('gray.50', 'brand.700') }}
                 >
-                  View Profile
+                  <Box>
+                    <Text fontSize="sm" fontWeight="medium">View Profile</Text>
+                    <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>Manage your account</Text>
+                  </Box>
                 </MenuItem>
                 <MenuItem
-                  icon={<FiBriefcase />}
-                  onClick={() => navigate('/company')}
+                  icon={<FiBriefcase size={16} />}
+                  onClick={() => navigate(`/company/${selectedCompanyId}`)}
+                  py={2}
+                  px={4}
+                  _hover={{ bg: useColorModeValue('gray.50', 'brand.700') }}
                 >
-                  View Company
+                  <Box>
+                    <Text fontSize="sm" fontWeight="medium">View Company</Text>
+                    <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>Manage company settings</Text>
+                  </Box>
                 </MenuItem>
+                {companies?.length > 1 && (
+                  <>
+                    <MenuDivider borderColor={useColorModeValue('gray.200', 'brand.700')} />
+                    <Box px={4} py={2}>
+                      <Text fontSize="xs" fontWeight="bold" color={useColorModeValue('gray.500', 'gray.400')} mb={2}>
+                        SWITCH COMPANY
+                      </Text>
+                      {companies.map((company) => (
+                        <MenuItem
+                          key={company.id}
+                          onClick={() => switchCompany(company.id)}
+                          py={2}
+                          px={4}
+                          bg={company.id === selectedCompanyId ? useColorModeValue('gray.50', 'brand.700') : 'transparent'}
+                          _hover={{ bg: useColorModeValue('gray.50', 'brand.700') }}
+                        >
+                          <HStack spacing={3}>
+                            <Box
+                              w="32px"
+                              h="32px"
+                              borderRadius="md"
+                              overflow="hidden"
+                              bg={useColorModeValue('gray.100', 'brand.700')}
+                            >
+                              {company.picture && (
+                                <Image
+                                  src={company.picture}
+                                  alt={company.name}
+                                  w="100%"
+                                  h="100%"
+                                  objectFit="cover"
+                                />
+                              )}
+                            </Box>
+                            <Box>
+                              <Text fontSize="sm" fontWeight="medium">{company.name}</Text>
+                              <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+                                {company.address}
+                              </Text>
+                            </Box>
+                          </HStack>
+                        </MenuItem>
+                      ))}
+                    </Box>
+                  </>
+                )}
+                <MenuDivider borderColor={useColorModeValue('gray.200', 'brand.700')} />
                 <MenuItem
-                  icon={<FiLogOut />}
+                  icon={<FiLogOut size={16} />}
                   onClick={handleSignOut}
+                  py={2}
+                  px={4}
+                  color="red.500"
+                  _hover={{ bg: useColorModeValue('red.50', 'red.900') }}
                 >
-                  Sign Out
+                  <Text fontSize="sm" fontWeight="medium">Sign Out</Text>
                 </MenuItem>
               </MenuList>
             </Menu>
@@ -173,7 +245,7 @@ const Layout = ({ children }) => {
 
       {/* Main Content */}
       <Box flex={1} ml="250px" p={8} bg={mainBg}>
-        {children}
+        <Outlet />
       </Box>
     </Flex>
   )

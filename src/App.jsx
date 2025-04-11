@@ -15,6 +15,7 @@ import Commerce from './pages/Commerce'
 import Profile from './pages/Profile'
 import Company from './pages/Company'
 
+
 const theme = extendTheme({
   config: {
     initialColorMode: 'dark',
@@ -120,106 +121,20 @@ function App() {
         <Router>
           <Routes>
             <Route path="/signin" element={<SignIn />} />
-            <Route
-              path="/"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Home />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/launchpad"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Launchpad />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/ops"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Ops />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/intelligence"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Intelligence />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/pulse"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Pulse />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/secure"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Secure />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/connect"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Connect />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/commerce"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Commerce />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Profile />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/company"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Company />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="launchpad" element={<PrivateRoute><Launchpad /></PrivateRoute>} />
+              <Route path="ops" element={<PrivateRoute><Ops /></PrivateRoute>} />
+              <Route path="intelligence" element={<PrivateRoute><Intelligence /></PrivateRoute>} />
+              <Route path="pulse" element={<PrivateRoute><Pulse /></PrivateRoute>} />
+              <Route path="secure" element={<PrivateRoute><Secure /></PrivateRoute>} />
+              <Route path="connect" element={<PrivateRoute><Connect /></PrivateRoute>} />
+              <Route path="commerce" element={<PrivateRoute><Commerce /></PrivateRoute>} />
+              <Route path="profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="company/:companyId" element={<PrivateRoute><Company /></PrivateRoute>} />
+   
+              <Route path="*" element={<Navigate to="/" />} />
+            </Route>
           </Routes>
         </Router>
       </AuthProvider>
